@@ -14,6 +14,9 @@ class Seq2SeqModel:
         self.vocab_to_int = vocab_to_int
         self.batch_size = 256
 
+    def set_batch_size(self, batch_size):
+        self.batch_size = batch_size
+
 
 
     def placeholder_init(self):
@@ -54,7 +57,7 @@ class Seq2SeqModel:
         output_layer = Dense(self.num_decoder_symbols,
                              kernel_initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
 
-        return dec_cell, dec_embed_input, output_layer
+        return dec_cell, dec_embed_input, output_layer, dec_embeddings
 
     def attention_init(self, dec_cell, encoder_outputs, enc_state):
         # attention_states = tf.transpose(encoder_outputs, [1, 0, 2])
@@ -78,7 +81,7 @@ class Seq2SeqModel:
 
 
 
-    def training_help_init(self, enc_state, output_layer, dec_embed_input, dec_cell):
+    def training_helper_init(self, enc_state, output_layer, dec_embed_input, dec_cell):
         training_helper = tf.contrib.seq2seq.TrainingHelper(inputs=dec_embed_input,
                                                             sequence_length=self.summary_length,
                                                             time_major=False)
@@ -96,8 +99,25 @@ class Seq2SeqModel:
 
         return training_logits
 
-    def train_operation_init(self, training_decoder_output):
+    def inference_helper_init(self, dec_embeddings, output_layer, enc_state, dec_cell):
+        start_token = self.vocab_to_int["<GO>"]
+        end_token = self.vocab_to_int["<EOS>"]
+        start_tokens = tf.tile(tf.constant([start_token], dtype=tf.int32), [self.batch_size],
+                               name='start_tokens')
+        initial_state = dec_cell.zero_state(self.batch_size, tf.float32).clone(cell_state=enc_state)
+        inference_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(dec_embeddings, start_tokens, end_token)
+        inference_decoder = tf.contrib.seq2seq.BasicDecoder(dec_cell, inference_helper, initial_state, output_layer)
+        inference_decoder_output = tf.contrib.seq2seq.dynamic_decode(inference_decoder,
+                                                                     output_time_major=False,
+                                                                     impute_finished=True,
+                                                                     maximum_iterations=self.max_summary_length)[0]
+        return inference_decoder_output
+
+
+    def train_operation_init(self, training_decoder_output, inference_decoder_output):
         training_logits = tf.identity(training_decoder_output.rnn_output, 'logits')
+        self.inference_logits = tf.identity(inference_decoder_output.sample_id, name='predictions')
+
         masks = tf.sequence_mask(self.summary_length, self.max_summary_length, dtype=tf.float32,
                                  name='masks')
         self.cost = tf.contrib.seq2seq.sequence_loss(training_logits, self.targets, masks)
@@ -119,15 +139,17 @@ class Seq2SeqModel:
         self.placeholder_init()
         enc_output, enc_state = self.encoder_layer_init()
         decoder_input = self.process_encoding_input(target_data=self.targets)
-        dec_cell, dec_embed_input, output_layer = self.decoding_layer_init(enc_state=enc_state, decoder_input=decoder_input)
+        dec_cell, dec_embed_input, output_layer, dec_embeddings = self.decoding_layer_init(enc_state=enc_state, decoder_input=decoder_input)
         dec_cell = self.attention_init(dec_cell=dec_cell, encoder_outputs=enc_output, enc_state=enc_state)
 
-        training_logits = self.training_help_init(enc_state=enc_state, output_layer=output_layer,
+        training_logits = self.training_helper_init(enc_state=enc_state, output_layer=output_layer,
                                                   dec_embed_input=dec_embed_input,
                                                   dec_cell=dec_cell)
         # training_logits = self.training_help_init(enc_state=enc_state, output_layer=output_layer, dec_embed_input=dec_embed_input,
         #                                           dec_cell=dec_cell)
-        self.train_operation_init(training_logits)
+        inference_decoder_output = self.inference_helper_init(dec_embeddings=dec_embeddings, output_layer=output_layer,
+                                                              enc_state=enc_state, dec_cell=dec_cell)
+        self.train_operation_init(training_logits, inference_decoder_output)
 
 
 

@@ -210,8 +210,8 @@ def covert_to_ints(text, vocab_to_int, word_count, unk_count, is_eos = False):
             sentence_int.append(int_word)
             if int_word > len(vocab_to_int):
                 print(int_word)
-            if is_eos:
-                sentence_int.append(vocab_to_int[EOS])
+        if is_eos:
+            sentence_int.append(vocab_to_int[EOS])
 
         ints.append(sentence_int)
     return ints , word_count, unk_count

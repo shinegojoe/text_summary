@@ -55,14 +55,16 @@ def load_pkl(path):
 
 def load_data():
     base_path = 'data/'
-    summaries = load_pkl(base_path + 'sorted_summaries')
-    texts = load_pkl(base_path + 'sorted_texts')
+    # summaries = load_pkl(base_path + 'sorted_summaries')
+    # texts = load_pkl(base_path + 'sorted_texts')
+    summaries = load_pkl(base_path + 'min_summaries')
+    texts = load_pkl(base_path + 'min_texts')
     vocab_to_int = load_pkl(base_path + 'vocab_to_int.pkl')
 
     return summaries, texts, vocab_to_int
 
 def train():
-    epochs = 5
+    epochs = 30
     summaries, texts, vocab_to_int = load_data()
     # print(len(vocab_to_int))
     # print(summaries[:5])
@@ -72,8 +74,10 @@ def train():
 
     model = Seq2SeqModel(vocab_to_int)
     model.build_model()
+    saver = tf.train.Saver()
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+
         for epoch in range(epochs):
             print('epoch', epoch)
             batch_iter = get_batches(summaries=summaries, texts=texts, batch_size=256, vocab_to_int=vocab_to_int)
@@ -87,15 +91,39 @@ def train():
                         model.text_length:pad_texts_lengths}
                 sess.run(model.train_op, feed_dict=feed)
 
+
             loss = sess.run(model.cost, feed_dict=feed)
             print('loss', loss)
+            inference_logitis = sess.run(model.inference_logits, feed_dict=feed)
+            print(inference_logitis[0])
+
+        save_path = saver.save(sess, "my_net/save_net.ckpt")
+        print("Save to path: ", save_path)
 
 
     # print(pad_summaries_batch, pad_texts_batch, pad_summaries_lengths, pad_texts_lengths)
 
+def int_to_word(ids, int_to_vocab):
+    sentence = []
+    for id in ids:
+        print(id)
+        # if id not in int_to_vocab:
+        #     word = "<UNK>"
+        # else:
+        #     word = int_to_vocab[id]
+        # sentence.append(word)
+    return sentence
 
 
-train()
+
+
+
+
+
+
+
+
+# train()
 
 # summaries, texts, vocab_to_int = load_data()
 #
