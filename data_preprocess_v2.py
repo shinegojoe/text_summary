@@ -317,9 +317,12 @@ def sentence_filter(int_summaries, int_texts, texts_length, vocab_to_int):
 def sentence_filter_v2(texts, summaries, vocab_to_int):
     filterd_summaries = []
     filtered_texts = []
-    max_text_length = 84
+    # max_text_length = 84
+    max_text_length = 250
     max_summary_length = 13
     min_length = 2
+    text_min_length = 50
+
     unk_text_limit = 1
     unk_summary_limit = 0
     for i in range(len(texts)):
@@ -330,7 +333,7 @@ def sentence_filter_v2(texts, summaries, vocab_to_int):
         unk_of_text = unk_counter(sentence=text, vocab_to_int=vocab_to_int)
         unk_of_summary = unk_counter(sentence=summary, vocab_to_int=vocab_to_int)
 
-        if text_length <= max_text_length and text_length >= min_length and unk_of_text <= unk_text_limit:
+        if text_length <= max_text_length and text_length >= text_min_length and unk_of_text <= unk_text_limit:
             if summary_length <= max_summary_length and summary_length >= min_length and unk_of_summary <= unk_summary_limit:
                 filtered_texts.append(text)
                 filterd_summaries.append(summary)
@@ -462,9 +465,17 @@ def main():
     # sorted_summaries, sorted_texts = sentence_filter(int_summaries=int_summaries, int_texts=int_texts, texts_length=texts_length,
     #                                                vocab_to_int=vocab_to_int)
 
-    print('train_x', len(data_set.train_x))
-    print('train_y', len(data_set.train_y))
+    # print('train_x', len(data_set.train_x))
+    # print('train_y', len(data_set.train_y))
+    for x in data_set.train_x:
+        x_len = len(x)
+        if x_len < 50:
+            print(x_len)
     filterd_train_x, filterd_train_y = sentence_filter_v2(texts=data_set.train_x, summaries=data_set.train_y, vocab_to_int=vocab_to_int)
+    for x in filterd_train_x:
+        x_len = len(x)
+        if x_len < 50:
+            print('filtered', x_len)
     print('filtered_train_x', len(filterd_train_x))
     print('filtered_train_y', len(filterd_train_y))
     filterd_val_x, filterd_val_y = sentence_filter_v2(texts=data_set.val_x, summaries=data_set.val_y,
@@ -572,8 +583,8 @@ def test():
 
 
 
-
-main()
+if __name__=="__main__":
+    main()
 # test()
 # import nltk
 # nltk.download()

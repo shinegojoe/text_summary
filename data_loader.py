@@ -21,11 +21,12 @@ def load_pkl(path):
     return data
 
 def load_data_set(config):
-    data_set = DataSet()
-    data_set.train_x = load_pkl(config.train_texts_path)
-    data_set.train_y = load_pkl(config.train_summaries_path)
-    data_set.test_x = load_pkl(config.test_texts_path)
-    data_set.test_y = load_pkl(config.test_summaries_path)
+    # data_set = DataSet()
+    # data_set.train_x = load_pkl(config.train_texts_path)
+    # data_set.train_y = load_pkl(config.train_summaries_path)
+    # data_set.test_x = load_pkl(config.test_texts_path)
+    # data_set.test_y = load_pkl(config.test_summaries_path)
+    data_set = load_pkl(config.data_set_path)
 
     return data_set
 

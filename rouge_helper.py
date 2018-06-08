@@ -1,4 +1,5 @@
 import numpy as np
+from nltk.translate.bleu_score import sentence_bleu
 
 class ROUGEHelper():
     def __init__(self):
@@ -55,7 +56,46 @@ class ROUGEHelper():
             ref_words = ref
 
             score = self.get_socre(sentence=sentence_words, ref=ref_words, window_length=2)
+            # score = sentence_bleu([ref], sentence)
             batch_score.append(score)
 
         mean_score = np.mean(batch_score)
         return mean_score
+
+def remove_pad(padded):
+    pad_int = 62718
+    sentences = []
+    for line in padded:
+        line_buf = []
+        for word in line:
+            if word != pad_int:
+                line_buf.append(word)
+        sentences.append(line_buf)
+    return sentences
+
+def main():
+    # h = ROUGEHelper()
+    s = ['the', 'cat', 'was', 'found', 'under', 'the', 'bed']
+    r = ['the', 'cat', 'was', 'under', 'the', 'bed']
+    # s2 = [9049, 21128, 22556, 5055, 62718, 62718, 62718]
+    # r2 = [9049, 21128, 22556,  5055, 62718, 62718, 62718]
+    # S = [s, s2]
+    # R = [r, r2]
+    # # score = h.get_socre(s, r, 2)
+    # score = h.get_batch_score(S, R)
+    # print(score)
+    # test = [[53695, 40358, 59067,  5055, 62718, 62718],
+    #  [44246, 45763, 62718, 62718, 62718, 62718]]
+
+    # qq = remove_pad(test)
+    # for q in qq:
+    #     print(q)
+    reference = [['The', 'cat', 'is', 'on', 'the', 'mat']]
+    candidate = ['The', 'cat', 'sat', 'on', 'the', 'mat']
+    score = sentence_bleu(reference, candidate)
+    print(score)
+
+
+
+if __name__== "__main__":
+    main()

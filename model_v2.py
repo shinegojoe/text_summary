@@ -12,7 +12,7 @@ class Seq2SeqModel:
         self.num_layers = 2
         self.hidden_size = 128
         self.vocab_to_int = vocab_to_int
-        self.batch_size = 256
+        self.batch_size = 64
 
     def set_batch_size(self, batch_size):
         self.batch_size = batch_size

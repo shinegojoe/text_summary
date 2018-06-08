@@ -35,12 +35,12 @@ class IPredictor(metaclass=abc.ABCMeta):
 
 
 class Predictor(IPredictor):
-    def __init__(self, data_set, model, score_helper, vocab_dict):
+    def __init__(self, data_set, model, score_helper, vocab_dict, path):
         self.data_set = data_set
         self.model = model
         self.score_helper = score_helper
         self.vocab_dict = vocab_dict
-        self.sess = self.predic_init()
+        self.sess = self.predic_init(path)
 
 
     # def set_model(self, model):
@@ -51,10 +51,12 @@ class Predictor(IPredictor):
     #
     # def set_score_helper(self, score_helper):
     #     self.score_helper = score_helper
-    def predic_init(self):
+    def predic_init(self, path):
         saver = tf.train.Saver()
         sess = tf.Session()
-        saver.restore(sess, "my_net/save_net.ckpt")
+        saver.restore(sess, path)
+        # saver.restore(sess, "my_net/save_net.ckpt")
+        # saver.restore(sess, "my_net/save_net_no_attention.ckpt")
         return sess
 
     def id_to_vocab(self, data, int_to_vovab):
@@ -65,13 +67,25 @@ class Predictor(IPredictor):
 
         return sentence
 
-    def get_score(self, input_data, target, vocab_to_int):
+    def remove_pad(self, padded):
+        pad_int = 62718
+        sentences = []
+        for line in padded:
+            line_buf = []
+            for word in line:
+                if word != pad_int:
+                    line_buf.append(word)
+            sentences.append(line_buf)
+        return sentences
+
+
+    def get_score(self, input_data, target, vocab_to_int, batch_size):
         # summaries, texts, vocab_to_int = load_data()
         # int_to_vocab = load_pkl('data/' + 'int_to_vocab.pkl')
 
 
         scores = []
-        batch_iter = batch_helper.get_batches(texts=input_data, summaries=target, batch_size=256, vocab_to_int=vocab_to_int)
+        batch_iter = batch_helper.get_batches(texts=input_data, summaries=target, batch_size=batch_size, vocab_to_int=vocab_to_int)
         for pad_summaries_batch, pad_texts_batch, pad_summaries_lengths, pad_texts_lengths in batch_iter:
             # feed = {model.input_data: pad_texts_batch,
             #         model.summary_length: pad_summaries_batch,
@@ -82,7 +96,11 @@ class Predictor(IPredictor):
                     self.model.text_length: pad_texts_lengths}
             inference_logitis = self.sess.run(self.model.inference_logits, feed_dict=feed)
             # print('inference_logitis', inference_logitis)
-
+            # print("ref : ", pad_summaries_batch)
+            inference_logitis = self.remove_pad(inference_logitis)
+            pad_summaries_batch = self.remove_pad(pad_summaries_batch)
+            print('inference_logitis', inference_logitis)
+            print("ref : ", pad_summaries_batch)
             batch_score = self.score_helper.get_batch_score(inference_logitis, pad_summaries_batch)
             print(batch_score)
             scores.append(batch_score)
