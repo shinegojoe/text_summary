@@ -6,13 +6,13 @@ class Seq2SeqModel:
     def __init__(self, vocab_to_int, batch_size):
         self.learning_rate = 0.001
         # self.embedding_size = 300
-        self.embedding_size = 200
+        self.embedding_size = 128
         self.num_encoder_symbols = len(vocab_to_int)
         self.num_decoder_symbols = len(vocab_to_int)
         # self.num_layers = 2
         self.num_layers = 1
         # self.hidden_size = 128
-        self.hidden_size = 128
+        self.hidden_size = 64
         self.vocab_to_int = vocab_to_int
         self.batch_size = batch_size
 
@@ -39,26 +39,48 @@ class Seq2SeqModel:
         drop = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=self.keep_prob)
         return cell
 
+
+    # def encoder_layer_init(self):
+    #     """
+    #             using bidirectional_dynamic_rnn
+    #             """
+    #
+    #     initializer = tf.orthogonal_initializer()
+    #     enc_embed_input = tf.contrib.layers.embed_sequence(self.input_data, self.num_encoder_symbols,
+    #                                                        self.embedding_size, initializer=initializer)
+    #
+    #     enc_embed_input = tf.nn.dropout(enc_embed_input, self.keep_prob)
+    #     cell_fw = tf.contrib.rnn.MultiRNNCell([self.make_cell() for _ in range(self.num_layers)])
+    #     cell_bw = tf.contrib.rnn.MultiRNNCell([self.make_cell() for _ in range(self.num_layers)])
+    #
+    #     # enc_output, enc_state = tf.nn.dynamic_rnn(cell_fw, enc_embed_input,
+    #     #                                           sequence_length=self.text_length, dtype=tf.float32)
+    #     enc_output, enc_state = tf.nn.bidirectional_dynamic_rnn(cell_fw,
+    #                                                             cell_bw,
+    #                                                             enc_embed_input,
+    #                                                             self.text_length,
+    #                                                             dtype=tf.float32)
+    #     # Join outputs since we are using a bidirectional RNN
+    #     # enc_output = tf.concat(enc_output, 2)
+    #     # return enc_state
+    #     return enc_state[0]
+
+
     def encoder_layer_init(self):
+        """
+                using one directional_dynamic_rnn
+                """
         initializer = tf.orthogonal_initializer()
         enc_embed_input = tf.contrib.layers.embed_sequence(self.input_data, self.num_encoder_symbols,
                                                            self.embedding_size, initializer=initializer)
-
         enc_embed_input = tf.nn.dropout(enc_embed_input, self.keep_prob)
-        cell_fw = tf.contrib.rnn.MultiRNNCell([self.make_cell() for _ in range(self.num_layers)])
-        cell_bw = tf.contrib.rnn.MultiRNNCell([self.make_cell() for _ in range(self.num_layers)])
+        cell = tf.contrib.rnn.MultiRNNCell([self.make_cell() for _ in range(self.num_layers)])
 
-        # enc_output, enc_state = tf.nn.dynamic_rnn(cell_fw, enc_embed_input,
-        #                                           sequence_length=self.text_length, dtype=tf.float32)
-        enc_output, enc_state = tf.nn.bidirectional_dynamic_rnn(cell_fw,
-                                                                cell_bw,
-                                                                enc_embed_input,
-                                                                self.text_length,
-                                                                dtype=tf.float32)
-        # Join outputs since we are using a bidirectional RNN
-        # enc_output = tf.concat(enc_output, 2)
-        # return enc_state
-        return enc_state[0]
+        enc_output, enc_state = tf.nn.dynamic_rnn(cell, enc_embed_input,
+                                                  sequence_length=self.text_length, dtype=tf.float32)
+        self.enc_embed_input = enc_embed_input
+
+        return enc_state
 
     def decoding_layer_init(self, enc_state, decoder_input):
         # dec_embeddings = tf.Variable(tf.random_uniform([self.num_decoder_symbols, self.embedding_size]))
@@ -118,7 +140,7 @@ class Seq2SeqModel:
         masks = tf.sequence_mask(self.summary_length, self.max_summary_length, dtype=tf.float32,
                                  name='masks')
 
-        # l2_loss = 0.01 * tf.nn.l2_loss(dec_embeddings)
+        # l2_loss = 0.05 * (tf.nn.l2_loss(dec_embeddings) + tf.nn.l2_loss(self.enc_embed_input))
         self.cost = tf.contrib.seq2seq.sequence_loss(training_logits, self.targets, masks)
         # Optimizer
         optimizer = tf.train.AdamOptimizer(self.learning_rate)

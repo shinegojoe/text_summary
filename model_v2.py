@@ -4,18 +4,18 @@ from tensorflow.python.layers.core import Dense
 from tensorflow.python.ops.rnn_cell_impl import _zero_state_tensors
 
 class Seq2SeqModel:
-    def __init__(self, vocab_to_int):
+    def __init__(self, vocab_to_int, batch_size):
         self.learning_rate = 0.001
-        self.embedding_size = 300
+        self.embedding_size = 128
         self.num_encoder_symbols = len(vocab_to_int)
         self.num_decoder_symbols = len(vocab_to_int)
-        self.num_layers = 2
-        self.hidden_size = 128
+        self.num_layers = 1
+        self.hidden_size = 64
         self.vocab_to_int = vocab_to_int
-        self.batch_size = 64
-
-    def set_batch_size(self, batch_size):
         self.batch_size = batch_size
+
+    # def set_batch_size(self, batch_size):
+    #     self.batch_size = batch_size
 
 
 

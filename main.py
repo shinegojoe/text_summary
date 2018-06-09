@@ -3,7 +3,8 @@ from data_preprocess_v2 import DataSet
 from trainer import Trainer, TrainerDirector
 from predictor import Predictor
 # from model_v2 import Seq2SeqModel
-from model import Seq2SeqModel
+# from model import Seq2SeqModel
+from model_v3 import Seq2SeqModel
 from hyper_optimizer.hyper_optimizer import Random_search
 from rouge_helper import ROUGEHelper
 from nltk.translate.bleu_score import sentence_bleu
@@ -20,6 +21,7 @@ class Config():
     # val_summaries_path = ''
     # test_texts_path = base_path + 'min_test_texts'
     # test_summaries_path = base_path + 'min_test_summaries'
+
     # vocab2int_path = base_path + 'vocab_to_int.pkl'
     # int2vocab_path = base_path + 'int_to_vocab.pkl'
     # data_set_path = base_path + 'long_length_data_set'
@@ -32,10 +34,15 @@ class Config():
 
 
 class TrainerConfig():
-    save_path = 'my_net/save_net_with_attention.ckpt'
+    save_path = 'my_net/save_net_without_attention.ckpt'
+    finan_save_path = 'my_net/save_net_without_attention_final.ckpt'
+    # save_path = 'my_net/test.ckpt'
     is_restore = False
     batch_size = 128
-    epochs = 30
+    epochs = 20
+    learning_rate_decay = 0.9
+    learning_rate = 0.001
+    min_learning_rate = 0.0005
 
 
 
@@ -96,10 +103,11 @@ def main():
     # model = None
 
 
+
     model = Seq2SeqModel(vocab_dict.vocab_to_int, trainer_config.batch_size)
     model.build_model()
     score_helper = ROUGEHelper()
-
+    #
     trainer = Trainer(trainer_config)
     trainer_director = TrainerDirector(trainer)
     trainer_director.create_trainer(data_set=data_set, vocab_dict=vocab_dict, score_helper=None, model=model, log_helper=log_helper)
@@ -107,8 +115,7 @@ def main():
     # trainer = Random_search(component=trainer, hp_generator=None)
     trainer.run()
 
-    # predictor = Predictor(data_set=data_set, model=model, score_helper=score_helper, vocab_dict=vocab_dict,
-    #                       path=trainer_config.save_path)
+
 
     # test_sentence = data_set.train_x[0]
     # targrt_sentence = data_set.train_y[0]
@@ -125,9 +132,17 @@ def main():
     #                     batch_size=trainer_config.batch_size)
 
     # data_x, data_y = split_by_length(data_set.train_x, data_set.train_y)
-    # #
+    # # #
+    # # for x in data_set.train_x:
+    # #     print(len(x))
+    #
+    # predictor = Predictor(data_set=data_set, model=model, score_helper=score_helper, vocab_dict=vocab_dict,
+    #                       path=trainer_config.save_path)
+    #
     # predictor.get_score(input_data=data_x[6], target=data_y[6], vocab_to_int=vocab_dict.vocab_to_int,
     #                  batch_size=trainer_config.batch_size)
+    # predictor.get_score(input_data=data_set.train_x, target=data_set.train_y, vocab_to_int=vocab_dict.vocab_to_int,
+    #                     batch_size=trainer_config.batch_size)
 
 
 

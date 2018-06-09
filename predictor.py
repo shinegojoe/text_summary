@@ -67,8 +67,8 @@ class Predictor(IPredictor):
 
         return sentence
 
-    def remove_pad(self, padded):
-        pad_int = 62718
+    def remove_pad(self, padded, vocab_to_int):
+        pad_int = vocab_to_int['<PAD>']
         sentences = []
         for line in padded:
             line_buf = []
@@ -76,6 +76,7 @@ class Predictor(IPredictor):
                 if word != pad_int:
                     line_buf.append(word)
             sentences.append(line_buf)
+
         return sentences
 
 
@@ -92,15 +93,16 @@ class Predictor(IPredictor):
             #         model.text_length: pad_texts_lengths}
             feed = {self.model.input_data: pad_texts_batch,
                     self.model.targets: pad_summaries_batch,
+                    self.model.keep_prob:1.0,
                     self.model.summary_length: pad_summaries_lengths,
                     self.model.text_length: pad_texts_lengths}
             inference_logitis = self.sess.run(self.model.inference_logits, feed_dict=feed)
             # print('inference_logitis', inference_logitis)
             # print("ref : ", pad_summaries_batch)
-            inference_logitis = self.remove_pad(inference_logitis)
-            pad_summaries_batch = self.remove_pad(pad_summaries_batch)
-            print('inference_logitis', inference_logitis)
-            print("ref : ", pad_summaries_batch)
+            inference_logitis = self.remove_pad(inference_logitis, vocab_to_int)
+            pad_summaries_batch = self.remove_pad(pad_summaries_batch, vocab_to_int)
+            # print('inference_logitis', inference_logitis)
+            # print("ref : ", pad_summaries_batch)
             batch_score = self.score_helper.get_batch_score(inference_logitis, pad_summaries_batch)
             print(batch_score)
             scores.append(batch_score)

@@ -1,9 +1,9 @@
 import numpy as np
-from nltk.translate.bleu_score import sentence_bleu
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
 class ROUGEHelper():
     def __init__(self):
-        pass
+        self.smooth = SmoothingFunction()
 
     def get_socre(self, sentence, ref, window_length):
         # window_length =
@@ -56,7 +56,7 @@ class ROUGEHelper():
             ref_words = ref
 
             score = self.get_socre(sentence=sentence_words, ref=ref_words, window_length=2)
-            # score = sentence_bleu([ref], sentence)
+            # score = sentence_bleu([ref], sentence, smoothing_function=self.smooth.method3)
             batch_score.append(score)
 
         mean_score = np.mean(batch_score)
