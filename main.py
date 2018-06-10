@@ -14,7 +14,8 @@ from data_model import DataSet
 
 class Config():
     # base_path = 'data/'
-    base_path = 'movie_data/'
+    # base_path = 'movie_data/'
+    base_path = 'THUC_texts_summaries_data/'
     # train_texts_path = base_path + 'min_texts'
     # train_summaries_path = base_path+ 'min_summaries'
     # val_texts_path = ''
@@ -34,8 +35,10 @@ class Config():
 
 
 class TrainerConfig():
-    save_path = 'my_net/save_net_without_attention.ckpt'
-    finan_save_path = 'my_net/save_net_without_attention_final.ckpt'
+    save_path = 'my_net/thuc_model.ckpt'
+    finan_save_path = 'my_net/thuc_model_final.ckpt'
+    # save_path = 'my_net/save_net_without_attention.ckpt'
+    # finan_save_path = 'my_net/save_net_without_attention_final.ckpt'
     # save_path = 'my_net/test.ckpt'
     is_restore = False
     batch_size = 128

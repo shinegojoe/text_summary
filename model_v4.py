@@ -1,4 +1,6 @@
-
+"""
+baes on model_v3, add attention 
+"""
 
 import tensorflow as tf
 import pickle
@@ -33,13 +35,13 @@ class Seq2SeqModel:
         # self.learning_rate = 0.001
         self.num_vocab = len(vocab_to_int)
         # self.embedding_size = 300
-        self.embedding_size = 200
+        self.embedding_size = 300
         # self.num_encoder_symbols = len(vocab_to_int)
         # self.num_decoder_symbols = len(vocab_to_int)
         # self.num_layers = 2
         self.num_layers = 1
         # self.hidden_size = 128
-        self.hidden_size = 64
+        self.hidden_size = 128
         self.vocab_to_int = vocab_to_int
         self.batch_size = batch_size
 
@@ -79,7 +81,7 @@ class Seq2SeqModel:
 
         # enc_output, enc_state = tf.nn.bidirectional_dynamic_rnn(cell, cell, enc_embed_input,
         #                                                            self.text_length, dtype=tf.float32)
-        return enc_state
+        return enc_output, enc_state
 
     def dec_embedding_layer_init(self, dec_input):
         dec_embeddings = tf.Variable(tf.random_uniform([self.num_vocab, self.embedding_size], 0, 1))
@@ -97,12 +99,28 @@ class Seq2SeqModel:
 
         return output_layer
 
+    def attention_init(self, dec_cell, encoder_outputs, enc_state):
+        # attention_states = tf.transpose(encoder_outputs, [1, 0, 2])
+        attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(num_units=self.hidden_size, memory=encoder_outputs)
+        # attention_mechanism = tf.contrib.seq2seq.LuongAttention(
+        #     self.hidden_size, attention_states,
+        #     memory_sequence_length=self.text_length)
+        # decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
+        #     dec_cell, attention_mechanism,
+        #     attention_layer_size=self.hidden_size/2)
+
+        decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
+            dec_cell, attention_mechanism,
+            attention_layer_size=self.hidden_size)
+        return decoder_cell
+
     def training_help_init(self, enc_state, output_layer, dec_embed_input, dec_cell):
+        initial_state = dec_cell.zero_state(self.batch_size, tf.float32).clone(cell_state=enc_state)
 
         training_helper = tf.contrib.seq2seq.TrainingHelper(inputs=dec_embed_input,
                                                             sequence_length=self._summary_length,
                                                             time_major=False)
-        training_decoder = tf.contrib.seq2seq.BasicDecoder(dec_cell, training_helper, enc_state, output_layer)
+        training_decoder = tf.contrib.seq2seq.BasicDecoder(dec_cell, training_helper, initial_state, output_layer)
 
         # training_decoder_output = tf.contrib.seq2seq.dynamic_decode(training_decoder, impute_finished=True)[0]
         # training_logits, _ = tf.contrib.seq2seq.dynamic_decode(training_decoder,
@@ -117,13 +135,14 @@ class Seq2SeqModel:
         return training_decoder_output
 
     def inference_helper_init(self, dec_embeddings, output_layer, enc_state, dec_cell):
+        initial_state = dec_cell.zero_state(self.batch_size, tf.float32).clone(cell_state=enc_state)
         start_token = self.vocab_to_int["<GO>"]
         end_token = self.vocab_to_int["<EOS>"]
         start_tokens = tf.tile(tf.constant([start_token], dtype=tf.int32), [self.batch_size],
                                name='start_tokens')
         # initial_state = dec_cell.zero_state(self.batch_size, tf.float32).clone(cell_state=enc_state)
         inference_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(dec_embeddings, start_tokens, end_token)
-        inference_decoder = tf.contrib.seq2seq.BasicDecoder(dec_cell, inference_helper, enc_state, output_layer)
+        inference_decoder = tf.contrib.seq2seq.BasicDecoder(dec_cell, inference_helper, initial_state, output_layer)
         inference_decoder_output = tf.contrib.seq2seq.dynamic_decode(inference_decoder,
                                                                      output_time_major=False,
                                                                      impute_finished=True,
@@ -156,11 +175,12 @@ class Seq2SeqModel:
     def build_model(self):
         self.placeholder_init()
         enc_embed_input = self.enc_embedding_layer_init()
-        enc_state = self.encoder_layer_init(enc_embed_input)
+        enc_output, enc_state = self.encoder_layer_init(enc_embed_input)
         dec_input = self.process_encoding_input()
         dec_embed_input, dec_embeddings = self.dec_embedding_layer_init(dec_input)
         # dec_cell = self.dec_embedding_layer_init(dec_input)
         dec_cell = tf.contrib.rnn.MultiRNNCell([self.make_cell() for _ in range(self.num_layers)])
+        dec_cell = self.attention_init(dec_cell, enc_output, enc_state)
 
         output_layer = self.output_layer_init()
         training_decoder_output = self.training_help_init(enc_state=enc_state, output_layer=output_layer,

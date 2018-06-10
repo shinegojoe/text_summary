@@ -126,7 +126,7 @@ class Trainer(ITrainer, IHyperOptimizer):
         last_val_loss = 1000
         with tf.Session() as sess:
             if self.config.is_restore:
-                saver.restore(sess, self.config.save_path)
+                saver.restore(sess, self.config.restore_path)
             else:
                 sess.run(tf.global_variables_initializer())
             # saver.restore(sess, "my_net/save_net.ckpt")
@@ -144,30 +144,30 @@ class Trainer(ITrainer, IHyperOptimizer):
                             self.model.targets: pad_summaries_batch,
                             self.model.summary_length: pad_summaries_lengths,
                             self.model.text_length: pad_texts_lengths,
-                            self.model.keep_prob:0.4,
+                            self.model.keep_prob:0.6,
                             self.model.learning_rate:self.config.learning_rate}
                     sess.run(self.model.train_op, feed_dict=feed)
                     # loss = sess.run(self.model.cost, feed_dict=feed)
                     # print(loss)
 
                 # loss = sess.run(self.model.cost, feed_dict=feed)
-                test_amount = self.config.batch_size * 10
+                test_amount = self.config.batch_size * 20
                 train_loss = self.calculate_loss(sess=sess, input=self.data_set.train_x[:test_amount], target=self.data_set.train_y[:test_amount])
                 print('train_loss', train_loss)
                 val_loss = self.calculate_loss(sess=sess, input=self.data_set.val_x, target=self.data_set.val_y)
                 print("val_loss", val_loss)
                 train_loss_log.append(train_loss)
                 val_loss_log.append(val_loss)
-                if val_loss < last_val_loss:
-                    save_path = saver.save(sess, self.config.save_path)
-                    print("Save to path: ", save_path)
-                    last_val_loss = val_loss
+                # if val_loss < last_val_loss:
+                #     save_path = saver.save(sess, self.config.save_path)
+                #     print("Save to path: ", save_path)
+                #     last_val_loss = val_loss
                 # inference_logitis = sess.run(self.model.inference_logits, feed_dict=feed)
                 # print(inference_logitis[0])
 
             # save_path = saver.save(sess, "my_net/save_net_no_attention.ckpt")
             self.log_helper.save_plt(x1=train_loss_log, x2=val_loss_log, file_name="loss_log", x1_label="train_loss", x2_label="val_loss")
-            save_path = saver.save(sess, self.config.final_save_path)
+            save_path = saver.save(sess, self.config.save_path_final)
             # save_path = saver.save(sess, 'my_net/test.ckpt')
             print("Save to path: ", save_path)
             # print("Save to path: ", save_path)

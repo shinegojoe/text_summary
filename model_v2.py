@@ -72,10 +72,6 @@ class Seq2SeqModel:
         decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
             dec_cell, attention_mechanism,
             attention_layer_size=self.hidden_size)
-
-
-
-
         return decoder_cell
 
 

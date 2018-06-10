@@ -1,4 +1,6 @@
-
+"""
+base on model_v3, add beam search
+"""
 
 import tensorflow as tf
 import pickle
@@ -33,13 +35,13 @@ class Seq2SeqModel:
         # self.learning_rate = 0.001
         self.num_vocab = len(vocab_to_int)
         # self.embedding_size = 300
-        self.embedding_size = 200
+        self.embedding_size = 300
         # self.num_encoder_symbols = len(vocab_to_int)
         # self.num_decoder_symbols = len(vocab_to_int)
         # self.num_layers = 2
         self.num_layers = 1
         # self.hidden_size = 128
-        self.hidden_size = 64
+        self.hidden_size = 128
         self.vocab_to_int = vocab_to_int
         self.batch_size = batch_size
 
@@ -99,6 +101,7 @@ class Seq2SeqModel:
 
     def training_help_init(self, enc_state, output_layer, dec_embed_input, dec_cell):
 
+
         training_helper = tf.contrib.seq2seq.TrainingHelper(inputs=dec_embed_input,
                                                             sequence_length=self._summary_length,
                                                             time_major=False)
@@ -117,13 +120,23 @@ class Seq2SeqModel:
         return training_decoder_output
 
     def inference_helper_init(self, dec_embeddings, output_layer, enc_state, dec_cell):
+        beam_width = 3
+        # initial_state = tf.nn.rnn_cell.LSTMStateTuple(tf.contrib.seq2seq.tile_batch(enc_state[0], multiplier=beam_width),
+        #                                               tf.contrib.seq2seq.tile_batch(enc_state[1], multiplier=beam_width))
+        initial_state = tf.contrib.seq2seq.tile_batch(enc_state, multiplier=beam_width)
         start_token = self.vocab_to_int["<GO>"]
         end_token = self.vocab_to_int["<EOS>"]
         start_tokens = tf.tile(tf.constant([start_token], dtype=tf.int32), [self.batch_size],
                                name='start_tokens')
         # initial_state = dec_cell.zero_state(self.batch_size, tf.float32).clone(cell_state=enc_state)
-        inference_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(dec_embeddings, start_tokens, end_token)
-        inference_decoder = tf.contrib.seq2seq.BasicDecoder(dec_cell, inference_helper, enc_state, output_layer)
+        # inference_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(dec_embeddings, start_tokens, end_token)
+        # inference_decoder = tf.contrib.seq2seq.BasicDecoder(dec_cell, inference_helper, enc_state, output_layer)
+
+        inference_decoder = tf.contrib.seq2seq.BeamSearchDecoder(cell=dec_cell, embedding=dec_embeddings, start_tokens=start_tokens,
+                                                                 end_token=end_token, initial_state=initial_state,
+                                                                 output_layer=output_layer, beam_width=beam_width,
+                                                                 length_penalty_weight=0.0)
+
         inference_decoder_output = tf.contrib.seq2seq.dynamic_decode(inference_decoder,
                                                                      output_time_major=False,
                                                                      impute_finished=True,
