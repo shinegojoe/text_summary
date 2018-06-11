@@ -60,10 +60,12 @@ class Predictor(IPredictor):
         return sess
 
     def id_to_vocab(self, data, int_to_vovab):
-        sentence = []
+
+        sentence = ''
         for id in data:
             word = int_to_vovab[id]
-            sentence.append(word)
+            # sentence.append(word)
+            sentence += word
 
         return sentence
 
@@ -109,16 +111,26 @@ class Predictor(IPredictor):
 
         print('score = ', np.mean(scores))
 
-    def one_text_prediction(self, sentence, batch_size):
+    def one_text_prediction(self, sentence, batch_size, target=None):
         sentence_length = len(sentence)
         feed = {self.model.input_data: [sentence] * batch_size,
                 self.model.summary_length: [sentence_length] * batch_size,
-                self.model.text_length: [sentence_length] * batch_size
+                self.model.text_length: [sentence_length] * batch_size,
+                self.model.keep_prob: 1.0
                 }
         inference_logitis = self.sess.run(self.model.inference_logits, feed_dict=feed)[0]
-        print('inference_logitis', inference_logitis)
-        sentence = self.id_to_vocab(data=inference_logitis, int_to_vovab=self.vocab_dict.int_to_vocab)
-        print(sentence)
+        # print('inference_logitis', inference_logitis)
+        predict_sentence = self.id_to_vocab(data=inference_logitis, int_to_vovab=self.vocab_dict.int_to_vocab)
+
+
+        inputs = self.id_to_vocab(sentence, self.vocab_dict.int_to_vocab)
+        print(inputs)
+        if target != None:
+            t = self.id_to_vocab(target, self.vocab_dict.int_to_vocab)
+            print('summary = ', t)
+        print('prediction = ', predict_sentence)
+
+
 
 
 

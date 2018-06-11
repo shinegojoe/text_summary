@@ -4,7 +4,7 @@ from trainer import Trainer, TrainerDirector
 from predictor import Predictor
 # from model_v2 import Seq2SeqModel
 # from model import Seq2SeqModel
-from model_v3 import Seq2SeqModel
+from model_v4 import Seq2SeqModel
 from hyper_optimizer.hyper_optimizer import Random_search
 from rouge_helper import ROUGEHelper
 from nltk.translate.bleu_score import sentence_bleu
@@ -35,16 +35,21 @@ class Config():
 
 
 class TrainerConfig():
-    save_path = 'my_net/thuc_model.ckpt'
-    finan_save_path = 'my_net/thuc_model_final.ckpt'
+    # save_path_best_loss = 'my_net/thuc_model.ckpt'
+    # save_path_final = 'my_net/thuc_model_final.ckpt'
+    save_path_best_loss = 'my_net/thuc_model_attention.ckpt'
+    save_path_final = 'my_net/thuc_model_final_attention.ckpt'
+    predict_model_path = save_path_final
     # save_path = 'my_net/save_net_without_attention.ckpt'
     # finan_save_path = 'my_net/save_net_without_attention_final.ckpt'
     # save_path = 'my_net/test.ckpt'
     is_restore = False
-    batch_size = 128
-    epochs = 20
+    restore_path = save_path_final
+    save_path = save_path_final
+    batch_size = 64
+    epochs = 40
     learning_rate_decay = 0.9
-    learning_rate = 0.001
+    learning_rate = 0.003
     min_learning_rate = 0.0005
 
 
@@ -71,25 +76,25 @@ def split_by_length(texts, summaries):
         x = texts[i]
         y = summaries[i]
         x_len = len(x)
-        if x_len >=10 and x_len < 20:
+        if x_len >=10 and x_len < 30:
             g1_x.append(x)
             g1_y.append(y)
-        elif x_len >= 20 and x_len < 30:
+        elif x_len >= 30 and x_len < 50:
             g2_x.append(x)
             g2_y.append(y)
-        elif x_len >=30 and x_len < 40:
+        elif x_len >=50 and x_len < 70:
             g3_x.append(x)
             g3_y.append(y)
-        elif x_len >=40 and x_len < 50:
+        elif x_len >=70 and x_len < 90:
             g4_x.append(x)
             g4_y.append(y)
-        elif x_len >=50 and x_len < 60:
+        elif x_len >=90 and x_len < 110:
             g5_x.append(x)
             g5_y.append(y)
-        elif x_len >=60 and x_len < 70:
+        elif x_len >=110 and x_len < 130:
             g6_x.append(x)
             g6_y.append(y)
-        elif x_len >=70 and x_len < 80:
+        elif x_len >=130 and x_len < 150:
             g7_x.append(x)
             g7_y.append(y)
 
@@ -136,18 +141,24 @@ def main():
 
     # data_x, data_y = split_by_length(data_set.train_x, data_set.train_y)
     # # #
-    # # for x in data_set.train_x:
-    # #     print(len(x))
+    # for x in data_set.train_x:
+    #     print(len(x))
+    # for x in data_x[0]:
+    #     print(len(x))
     #
     # predictor = Predictor(data_set=data_set, model=model, score_helper=score_helper, vocab_dict=vocab_dict,
-    #                       path=trainer_config.save_path)
-    #
-    # predictor.get_score(input_data=data_x[6], target=data_y[6], vocab_to_int=vocab_dict.vocab_to_int,
+    #                       path=trainer_config.predict_model_path)
+
+    # predictor.get_score(input_data=data_x[0], target=data_y[0], vocab_to_int=vocab_dict.vocab_to_int,
     #                  batch_size=trainer_config.batch_size)
     # predictor.get_score(input_data=data_set.train_x, target=data_set.train_y, vocab_to_int=vocab_dict.vocab_to_int,
     #                     batch_size=trainer_config.batch_size)
-
-
+    # d1 = data_x[2]
+    # dy = data_y[2]
+    #
+    # for i in range(10):
+    #     predictor.one_text_prediction(d1[i+200], TrainerConfig.batch_size, dy[i+200])
+    #     print()
 
 
 

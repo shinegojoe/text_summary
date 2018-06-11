@@ -55,8 +55,8 @@ class ROUGEHelper():
             sentence_words = sentence
             ref_words = ref
 
-            # score = self.get_socre(sentence=sentence_words, ref=ref_words, window_length=2)
-            score = sentence_bleu([ref], sentence, smoothing_function=self.smooth.method3)
+            score = self.get_socre(sentence=sentence_words, ref=ref_words, window_length=2)
+            # score = sentence_bleu([ref], sentence, smoothing_function=self.smooth.method3)
             batch_score.append(score)
 
         mean_score = np.mean(batch_score)

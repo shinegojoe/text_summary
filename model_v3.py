@@ -137,7 +137,13 @@ class Seq2SeqModel:
         #                          name='masks')
 
         # l2_loss = 0.05 * (tf.nn.l2_loss(dec_embeddings) + tf.nn.l2_loss(self.enc_embed_input))
+        # regularization_cost = tf.contrib.layers.apply_regularization(tf.contrib.layers.l2_regularizer(0.0001), tf.trainable_variables())
+
         # self.cost = tf.contrib.seq2seq.sequence_loss(training_logits, self.targets, masks)
+
+        # tv = tf.trainable_variables()
+        # regularization_cost = 0.001 * tf.reduce_sum([tf.nn.l2_loss(v) for v in tv])
+
         self.cost = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self._targets, logits=training_logits)
         self.cost = tf.reduce_mean(self.cost)
         # Optimizer

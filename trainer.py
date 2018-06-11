@@ -144,7 +144,7 @@ class Trainer(ITrainer, IHyperOptimizer):
                             self.model.targets: pad_summaries_batch,
                             self.model.summary_length: pad_summaries_lengths,
                             self.model.text_length: pad_texts_lengths,
-                            self.model.keep_prob:0.6,
+                            self.model.keep_prob:0.3,
                             self.model.learning_rate:self.config.learning_rate}
                     sess.run(self.model.train_op, feed_dict=feed)
                     # loss = sess.run(self.model.cost, feed_dict=feed)
@@ -159,7 +159,7 @@ class Trainer(ITrainer, IHyperOptimizer):
                 train_loss_log.append(train_loss)
                 val_loss_log.append(val_loss)
                 # if val_loss < last_val_loss:
-                #     save_path = saver.save(sess, self.config.save_path)
+                #     save_path = saver.save(sess, self.config.save_path_best_loss)
                 #     print("Save to path: ", save_path)
                 #     last_val_loss = val_loss
                 # inference_logitis = sess.run(self.model.inference_logits, feed_dict=feed)
@@ -167,7 +167,7 @@ class Trainer(ITrainer, IHyperOptimizer):
 
             # save_path = saver.save(sess, "my_net/save_net_no_attention.ckpt")
             self.log_helper.save_plt(x1=train_loss_log, x2=val_loss_log, file_name="loss_log", x1_label="train_loss", x2_label="val_loss")
-            save_path = saver.save(sess, self.config.save_path_final)
+            save_path = saver.save(sess, self.config.save_path)
             # save_path = saver.save(sess, 'my_net/test.ckpt')
             print("Save to path: ", save_path)
             # print("Save to path: ", save_path)
