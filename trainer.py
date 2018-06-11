@@ -177,7 +177,8 @@ class Trainer(ITrainer, IHyperOptimizer):
                 # print(inference_logitis[0])
 
             # save_path = saver.save(sess, "my_net/save_net_no_attention.ckpt")
-            self.log_helper.save_plt(x1=train_loss_log, x2=val_loss_log, file_name="loss_log", x1_label="train_loss", x2_label="val_loss")
+            self.log_helper.save_plt(x1=train_loss_log, x2=val_loss_log, file_name=self.config.log_file_name, x1_label="train_loss",
+                                     x2_label="val_loss",y_label='loss')
             save_path = saver.save(sess, self.config.save_path)
             # save_path = saver.save(sess, 'my_net/test.ckpt')
             print("Save to path: ", save_path)

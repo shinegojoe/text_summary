@@ -20,15 +20,15 @@ class LogHelper():
     #           "Iteration: {}".format(iteration),
     #           tag + ": {:.4f}".format(log))
 
-    def save_plt(self, x1, x2, file_name, x1_label, x2_label):
+    def save_plt(self, x1, x2, file_name, x1_label, x2_label, y_label):
         line_1, = plt.plot(x1, 'b', label=x1_label)
         line_2, = plt.plot(x2, 'g', label=x2_label)
         # line_down, = plt.plot(time, down, 'r', label='Line down')
 
         # plt.title(file_name)
         plt.xlabel("epoch")
-        plt.ylabel(file_name)
+        plt.ylabel(y_label)
         plt.legend(handles=[line_1, line_2])
 
-        plt.savefig(self.file_name + file_name)
+        plt.savefig(self.file_name + file_name + '_' + y_label)
         plt.clf()

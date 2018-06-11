@@ -50,8 +50,9 @@ class TrainerConfig():
     is_restore = False
     restore_path = save_path_final
     save_path = save_path_final
+    log_file_name = 'movie_dialog'
     batch_size = 128
-    epochs = 3
+    epochs = 1
     last_val_loss = 100
     # learning_rate_decay = 0.9
     learning_rate = 0.003
