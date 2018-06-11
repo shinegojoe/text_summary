@@ -4,7 +4,7 @@ from trainer import Trainer, TrainerDirector
 from predictor import Predictor
 # from model_v2 import Seq2SeqModel
 # from model import Seq2SeqModel
-from model_v4 import Seq2SeqModel
+from model_v3 import Seq2SeqModel
 from hyper_optimizer.hyper_optimizer import Random_search
 from rouge_helper import ROUGEHelper
 from nltk.translate.bleu_score import sentence_bleu
@@ -12,6 +12,7 @@ from log_helper import LogHelper
 from data_model import DataSet
 import pickle
 import data_factory
+from bleu_helper import BLEUHelper
 
 
 class Config():
@@ -34,6 +35,10 @@ class Config():
     data_set_path = base_path + 'data_set.pkl'
 
 
+class Hyperparameters():
+    learning_rate = 0.005
+    l2_lambda = 0.001
+    keep_prob = 0.2
 
 
 class TrainerConfig():
@@ -48,15 +53,19 @@ class TrainerConfig():
     # finan_save_path = 'my_net/save_net_without_attention_final.ckpt'
     # save_path = 'my_net/test.ckpt'
     is_restore = False
+    last_val_loss = 1.95
+
     restore_path = save_path_final
     save_path = save_path_final
     log_file_name = 'movie_dialog'
     batch_size = 128
-    epochs = 1
-    last_val_loss = 100
+    epochs = 30
+
     # learning_rate_decay = 0.9
     learning_rate = 0.003
     # min_learning_rate = 0.0005
+    mode = 'train'
+    # mode = 'predict'
 
 
 #
@@ -119,14 +128,22 @@ def main():
 
     model = Seq2SeqModel(vocab_dict.vocab_to_int, trainer_config.batch_size)
     model.build_model()
-    score_helper = ROUGEHelper()
-    #
-    trainer = Trainer(trainer_config)
-    trainer_director = TrainerDirector(trainer)
-    trainer_director.create_trainer(data_set=data_set, vocab_dict=vocab_dict, score_helper=None, model=model, log_helper=log_helper)
+    # score_helper = ROUGEHelper()
+    bleu_helper = BLEUHelper(vocab_dict)
 
-    # trainer = Random_search(component=trainer, hp_generator=None)
-    trainer.run()
+    if trainer_config.mode == 'train':
+        trainer = Trainer(trainer_config)
+        trainer_director = TrainerDirector(trainer)
+        trainer_director.create_trainer(data_set=data_set, vocab_dict=vocab_dict, score_helper=bleu_helper, model=model, log_helper=log_helper)
+
+        # trainer = Random_search(component=trainer, hp_generator=None)
+        trainer.run()
+    else:
+        predictor = Predictor(data_set=data_set, model=model, score_helper=bleu_helper, vocab_dict=vocab_dict,
+                              path=trainer_config.predict_model_path)
+
+        predictor.get_score(input_data=data_set.train_x, target=data_set.train_y, vocab_to_int=vocab_dict.vocab_to_int,
+                            batch_size=trainer_config.batch_size)
 
 
 
@@ -153,16 +170,16 @@ def main():
     #
     # predictor = Predictor(data_set=data_set, model=model, score_helper=score_helper, vocab_dict=vocab_dict,
     #                       path=trainer_config.predict_model_path)
-
-    # predictor.get_score(input_data=data_x[0], target=data_y[0], vocab_to_int=vocab_dict.vocab_to_int,
-    #                  batch_size=trainer_config.batch_size)
-    # predictor.get_score(input_data=data_set.train_x, target=data_set.train_y, vocab_to_int=vocab_dict.vocab_to_int,
-    #                     batch_size=trainer_config.batch_size)
-    # d1 = data_x[2]
-    # dy = data_y[2]
+    #
+    # # predictor.get_score(input_data=data_x[0], target=data_y[0], vocab_to_int=vocab_dict.vocab_to_int,
+    # #                  batch_size=trainer_config.batch_size)
+    # # predictor.get_score(input_data=data_set.train_x, target=data_set.train_y, vocab_to_int=vocab_dict.vocab_to_int,
+    # #                     batch_size=trainer_config.batch_size)
+    # d1 = data_set.train_x
+    # dy = data_set.train_y
     #
     # for i in range(10):
-    #     predictor.one_text_prediction(d1[i+200], TrainerConfig.batch_size, dy[i+200])
+    #     predictor.one_text_prediction(d1[i+20], TrainerConfig.batch_size, dy[i+20])
     #     print()
 
 

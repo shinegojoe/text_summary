@@ -102,6 +102,44 @@ class Trainer(ITrainer, IHyperOptimizer):
     #             pad_texts_lengths.append(len(text))
     #
     #         yield pad_summaries_batch, pad_texts_batch, pad_summaries_lengths, pad_texts_lengths
+
+    def run_train_operation(self, sess, pad_texts_batch, pad_summaries_batch, pad_texts_lengths, pad_summaries_lengths):
+        feed = {self.model.input_data: pad_texts_batch,
+                self.model.targets: pad_summaries_batch,
+                self.model.summary_length: pad_summaries_lengths,
+                self.model.text_length: pad_texts_lengths,
+                self.model.keep_prob: 0.3,
+                self.model.learning_rate: self.config.learning_rate}
+        sess.run(self.model.train_op, feed_dict=feed)
+
+    def get_feed(self, pad_texts_batch, pad_summaries_batch, pad_texts_lengths, pad_summaries_lengths):
+
+        feed = {self.model.input_data: pad_texts_batch,
+                self.model.targets: pad_summaries_batch,
+                self.model.text_length: pad_texts_lengths,
+                self.model.summary_length: pad_summaries_lengths,
+                self.model.keep_prob: 1.0,
+                self.model.learning_rate: self.config.learning_rate}
+        return feed
+
+    def get_score(self, sess, x, y):
+        scores = []
+        batch_iter = batch_helper.get_batches(summaries=y, texts=x,
+                                              batch_size=self.config.batch_size,
+                                              vocab_to_int=self.vocab_dict.vocab_to_int)
+        for pad_summaries_batch, pad_texts_batch, pad_summaries_lengths, pad_texts_lengths in batch_iter:
+
+            feed = self.get_feed(pad_texts_batch, pad_summaries_batch, pad_texts_lengths, pad_summaries_lengths)
+
+            inference_logitis = sess.run(self.model.inference_logits, feed_dict=feed)
+            batch_score = self.score_helper.batch_score(inference_logitis, pad_summaries_batch)
+            scores.append(batch_score)
+        return np.mean(scores)
+
+
+
+
+
     def calculate_loss(self, sess, input, target):
         loss = []
         # val_state = sess.run(cell.zero_state(batch_size, tf.float32))
@@ -109,12 +147,8 @@ class Trainer(ITrainer, IHyperOptimizer):
                                               batch_size=self.config.batch_size,
                                               vocab_to_int=self.vocab_dict.vocab_to_int)
         for pad_summaries_batch, pad_texts_batch, pad_summaries_lengths, pad_texts_lengths in batch_iter:
-            feed = {self.model.input_data: pad_texts_batch,
-                    self.model.targets: pad_summaries_batch,
-                    self.model.summary_length: pad_summaries_lengths,
-                    self.model.text_length: pad_texts_lengths,
-                    self.model.keep_prob: 1.0,
-                    self.model.learning_rate: self.config.learning_rate}
+
+            feed = self.get_feed(pad_texts_batch, pad_summaries_batch, pad_texts_lengths, pad_summaries_lengths)
             batch_loss = sess.run(self.model.cost, feed_dict=feed)
             loss.append(batch_loss)
         # print("Val acc: {:.3f}".format(np.mean(acc)))
@@ -148,19 +182,28 @@ class Trainer(ITrainer, IHyperOptimizer):
                     # print('pad_summaries_batch', pad_summaries_batch.shape)
                     # print('pad_texts_batch', pad_texts_batch.shape)
                     # print(pad_summaries_batch)
-                    feed = {self.model.input_data: pad_texts_batch,
-                            self.model.targets: pad_summaries_batch,
-                            self.model.summary_length: pad_summaries_lengths,
-                            self.model.text_length: pad_texts_lengths,
-                            self.model.keep_prob:0.3,
-                            self.model.learning_rate:self.config.learning_rate}
-                    sess.run(self.model.train_op, feed_dict=feed)
+                    # feed = {self.model.input_data: pad_texts_batch,
+                    #         self.model.targets: pad_summaries_batch,
+                    #         self.model.summary_length: pad_summaries_lengths,
+                    #         self.model.text_length: pad_texts_lengths,
+                    #         self.model.keep_prob:0.3,
+                    #         self.model.learning_rate:self.config.learning_rate}
+                    # sess.run(self.model.train_op, feed_dict=feed)
+                    self.run_train_operation(sess, pad_texts_batch, pad_summaries_batch, pad_texts_lengths, pad_summaries_lengths)
                     # loss = sess.run(self.model.cost, feed_dict=feed)
                     # print(loss)
+                # inference_logitis = sess.run(self.model.inference_logits, feed_dict=feed)
+                # for i in range(10):
+                #     print(inference_logitis[i])
+                #
+                # score = self.score_helper.batch_score(inference_logitis, pad_summaries_batch)
+                # print(score)
+                train_score = self.get_score(sess, self.data_set.train_x, self.data_set.train_y)
+                print('train_score', train_score)
 
                 # loss = sess.run(self.model.cost, feed_dict=feed)
-                test_amount = self.config.batch_size * 20
-                train_loss = self.calculate_loss(sess=sess, input=self.data_set.train_x[:test_amount], target=self.data_set.train_y[:test_amount])
+                # test_amount = self.config.batch_size * 20
+                train_loss = self.calculate_loss(sess=sess, input=self.data_set.train_x, target=self.data_set.train_y)
                 print('train_loss', train_loss)
                 val_loss = self.calculate_loss(sess=sess, input=self.data_set.val_x, target=self.data_set.val_y)
                 print("val_loss", val_loss)
@@ -174,6 +217,7 @@ class Trainer(ITrainer, IHyperOptimizer):
                 #     print("Save to path: ", save_path)
                 #     last_val_loss = val_loss
                 # inference_logitis = sess.run(self.model.inference_logits, feed_dict=feed)
+
                 # print(inference_logitis[0])
 
             # save_path = saver.save(sess, "my_net/save_net_no_attention.ckpt")

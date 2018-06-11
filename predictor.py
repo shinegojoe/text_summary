@@ -66,6 +66,7 @@ class Predictor(IPredictor):
             word = int_to_vovab[id]
             # sentence.append(word)
             sentence += word
+            sentence += " "
 
         return sentence
 
@@ -101,11 +102,12 @@ class Predictor(IPredictor):
             inference_logitis = self.sess.run(self.model.inference_logits, feed_dict=feed)
             # print('inference_logitis', inference_logitis)
             # print("ref : ", pad_summaries_batch)
-            inference_logitis = self.remove_pad(inference_logitis, vocab_to_int)
-            pad_summaries_batch = self.remove_pad(pad_summaries_batch, vocab_to_int)
+            # inference_logitis = self.remove_pad(inference_logitis, vocab_to_int)
+            # pad_summaries_batch = self.remove_pad(pad_summaries_batch, vocab_to_int)
             # print('inference_logitis', inference_logitis)
             # print("ref : ", pad_summaries_batch)
-            batch_score = self.score_helper.get_batch_score(inference_logitis, pad_summaries_batch)
+            # batch_score = self.score_helper.get_batch_score(inference_logitis, pad_summaries_batch)
+            batch_score = self.score_helper.batch_score(inference_logitis, pad_summaries_batch)
             print(batch_score)
             scores.append(batch_score)
 

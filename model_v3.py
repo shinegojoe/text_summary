@@ -32,14 +32,14 @@ class Seq2SeqModel:
     def __init__(self, vocab_to_int, batch_size):
         # self.learning_rate = 0.001
         self.num_vocab = len(vocab_to_int)
-        # self.embedding_size = 300
-        self.embedding_size = 200
+        self.embedding_size = 300
+        # self.embedding_size = 200
         # self.num_encoder_symbols = len(vocab_to_int)
         # self.num_decoder_symbols = len(vocab_to_int)
-        # self.num_layers = 2
-        self.num_layers = 1
-        # self.hidden_size = 128
-        self.hidden_size = 64
+        self.num_layers = 2
+        # self.num_layers = 1
+        self.hidden_size = 128
+        # self.hidden_size = 64
         self.vocab_to_int = vocab_to_int
         self.batch_size = batch_size
 
