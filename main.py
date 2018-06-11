@@ -10,12 +10,14 @@ from rouge_helper import ROUGEHelper
 from nltk.translate.bleu_score import sentence_bleu
 from log_helper import LogHelper
 from data_model import DataSet
+import pickle
+import data_factory
 
 
 class Config():
     # base_path = 'data/'
-    # base_path = 'movie_data/'
-    base_path = 'THUC_texts_summaries_data/'
+    base_path = 'movie_data/'
+    # base_path = 'THUC_texts_summaries_data/'
     # train_texts_path = base_path + 'min_texts'
     # train_summaries_path = base_path+ 'min_summaries'
     # val_texts_path = ''
@@ -37,8 +39,10 @@ class Config():
 class TrainerConfig():
     # save_path_best_loss = 'my_net/thuc_model.ckpt'
     # save_path_final = 'my_net/thuc_model_final.ckpt'
-    save_path_best_loss = 'my_net/thuc_model_attention.ckpt'
-    save_path_final = 'my_net/thuc_model_final_attention.ckpt'
+    # save_path_best_loss = 'my_net/thuc_model_attention.ckpt'
+    # save_path_final = 'my_net/thuc_model_final_attention.ckpt'
+    save_path_best_loss = 'movie_dialog_net/model_best_loss.ckpt'
+    save_path_final = 'movie_dialog_net/model_final.ckpt'
     predict_model_path = save_path_final
     # save_path = 'my_net/save_net_without_attention.ckpt'
     # finan_save_path = 'my_net/save_net_without_attention_final.ckpt'
@@ -46,62 +50,62 @@ class TrainerConfig():
     is_restore = False
     restore_path = save_path_final
     save_path = save_path_final
-    batch_size = 64
-    epochs = 40
-    learning_rate_decay = 0.9
+    batch_size = 128
+    epochs = 3
+    last_val_loss = 100
+    # learning_rate_decay = 0.9
     learning_rate = 0.003
-    min_learning_rate = 0.0005
+    # min_learning_rate = 0.0005
 
 
+#
+# def split_by_length(texts, summaries):
+#     g1_x = []
+#     g2_x = []
+#     g3_x = []
+#     g4_x = []
+#     g5_x = []
+#     g6_x = []
+#     g7_x = []
+#
+#     g1_y = []
+#     g2_y = []
+#     g3_y = []
+#     g4_y = []
+#     g5_y = []
+#     g6_y = []
+#     g7_y = []
+#     data_x = [g1_x, g2_x, g3_x, g4_x, g5_x, g6_x, g7_x]
+#     data_y = [g1_y, g2_y, g3_y, g4_y, g5_y, g6_y, g7_y]
+#     for i in range(len(texts)):
+#         x = texts[i]
+#         y = summaries[i]
+#         x_len = len(x)
+#         if x_len >=10 and x_len < 30:
+#             g1_x.append(x)
+#             g1_y.append(y)
+#         elif x_len >= 30 and x_len < 50:
+#             g2_x.append(x)
+#             g2_y.append(y)
+#         elif x_len >=50 and x_len < 70:
+#             g3_x.append(x)
+#             g3_y.append(y)
+#         elif x_len >=70 and x_len < 90:
+#             g4_x.append(x)
+#             g4_y.append(y)
+#         elif x_len >=90 and x_len < 110:
+#             g5_x.append(x)
+#             g5_y.append(y)
+#         elif x_len >=110 and x_len < 130:
+#             g6_x.append(x)
+#             g6_y.append(y)
+#         elif x_len >=130 and x_len < 150:
+#             g7_x.append(x)
+#             g7_y.append(y)
+#
+#     return data_x, data_y
 
-def split_by_length(texts, summaries):
-    g1_x = []
-    g2_x = []
-    g3_x = []
-    g4_x = []
-    g5_x = []
-    g6_x = []
-    g7_x = []
 
-    g1_y = []
-    g2_y = []
-    g3_y = []
-    g4_y = []
-    g5_y = []
-    g6_y = []
-    g7_y = []
-    data_x = [g1_x, g2_x, g3_x, g4_x, g5_x, g6_x, g7_x]
-    data_y = [g1_y, g2_y, g3_y, g4_y, g5_y, g6_y, g7_y]
-    for i in range(len(texts)):
-        x = texts[i]
-        y = summaries[i]
-        x_len = len(x)
-        if x_len >=10 and x_len < 30:
-            g1_x.append(x)
-            g1_y.append(y)
-        elif x_len >= 30 and x_len < 50:
-            g2_x.append(x)
-            g2_y.append(y)
-        elif x_len >=50 and x_len < 70:
-            g3_x.append(x)
-            g3_y.append(y)
-        elif x_len >=70 and x_len < 90:
-            g4_x.append(x)
-            g4_y.append(y)
-        elif x_len >=90 and x_len < 110:
-            g5_x.append(x)
-            g5_y.append(y)
-        elif x_len >=110 and x_len < 130:
-            g6_x.append(x)
-            g6_y.append(y)
-        elif x_len >=130 and x_len < 150:
-            g7_x.append(x)
-            g7_y.append(y)
-
-    return data_x, data_y
-
-
-import pickle
 def main():
     cf = Config()
     log_helper = LogHelper()
@@ -139,7 +143,7 @@ def main():
     # predictor.get_score(input_data=data_set.test_x, target=data_set.test_y, vocab_to_int=vocab_dict.vocab_to_int,
     #                     batch_size=trainer_config.batch_size)
 
-    # data_x, data_y = split_by_length(data_set.train_x, data_set.train_y)
+    # data_x, data_y = data_factory.split_by_length(data_set.train_x, data_set.train_y)
     # # #
     # for x in data_set.train_x:
     #     print(len(x))

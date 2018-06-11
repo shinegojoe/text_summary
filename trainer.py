@@ -120,10 +120,18 @@ class Trainer(ITrainer, IHyperOptimizer):
         # print("Val acc: {:.3f}".format(np.mean(acc)))
         return np.mean(loss)
 
+    def save_model_check(self, saver, sess, val_loss, last_val_loss):
+        if val_loss < last_val_loss:
+            save_path = saver.save(sess, self.config.save_path_best_loss)
+            print("Save to path: ", save_path)
+            return val_loss
+        else:
+            return last_val_loss
+
     def run(self):
         epochs = self.config.epochs
         saver = tf.train.Saver()
-        last_val_loss = 1000
+        last_val_loss = self.config.last_val_loss
         with tf.Session() as sess:
             if self.config.is_restore:
                 saver.restore(sess, self.config.restore_path)
@@ -158,6 +166,9 @@ class Trainer(ITrainer, IHyperOptimizer):
                 print("val_loss", val_loss)
                 train_loss_log.append(train_loss)
                 val_loss_log.append(val_loss)
+
+                last_val_loss = self.save_model_check(saver=saver, sess=sess, val_loss=val_loss, last_val_loss=last_val_loss)
+                print('last loss ', last_val_loss)
                 # if val_loss < last_val_loss:
                 #     save_path = saver.save(sess, self.config.save_path_best_loss)
                 #     print("Save to path: ", save_path)
