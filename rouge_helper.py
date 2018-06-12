@@ -43,7 +43,7 @@ class ROUGEHelper():
         score = common_count / reference_count
         return score
 
-    def get_batch_score(self, batch_sentence, batch_ref):
+    def batch_score(self, batch_sentence, batch_ref):
         batch_score = []
         batch_size = len(batch_sentence)
         for i in range(batch_size):

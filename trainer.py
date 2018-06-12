@@ -174,6 +174,8 @@ class Trainer(ITrainer, IHyperOptimizer):
             # saver.restore(sess, "my_net/save_net.ckpt")
             train_loss_log = []
             val_loss_log = []
+            train_score_log = []
+            val_score_log = []
             for epoch in range(epochs):
                 print('epoch', epoch)
                 batch_iter = batch_helper.get_batches(summaries=self.data_set.train_y, texts=self.data_set.train_x,
@@ -199,7 +201,9 @@ class Trainer(ITrainer, IHyperOptimizer):
                 # score = self.score_helper.batch_score(inference_logitis, pad_summaries_batch)
                 # print(score)
                 train_score = self.get_score(sess, self.data_set.train_x, self.data_set.train_y)
+                val_score = self.get_score(sess, self.data_set.val_x, self.data_set.val_y)
                 print('train_score', train_score)
+                print('val_score', val_score)
 
                 # loss = sess.run(self.model.cost, feed_dict=feed)
                 # test_amount = self.config.batch_size * 20
@@ -207,11 +211,14 @@ class Trainer(ITrainer, IHyperOptimizer):
                 print('train_loss', train_loss)
                 val_loss = self.calculate_loss(sess=sess, input=self.data_set.val_x, target=self.data_set.val_y)
                 print("val_loss", val_loss)
+
+                train_score_log.append(train_score)
+                val_score_log.append(val_score)
                 train_loss_log.append(train_loss)
                 val_loss_log.append(val_loss)
 
                 last_val_loss = self.save_model_check(saver=saver, sess=sess, val_loss=val_loss, last_val_loss=last_val_loss)
-                print('last loss ', last_val_loss)
+                # print('last loss ', last_val_loss)
                 # if val_loss < last_val_loss:
                 #     save_path = saver.save(sess, self.config.save_path_best_loss)
                 #     print("Save to path: ", save_path)
@@ -223,6 +230,10 @@ class Trainer(ITrainer, IHyperOptimizer):
             # save_path = saver.save(sess, "my_net/save_net_no_attention.ckpt")
             self.log_helper.save_plt(x1=train_loss_log, x2=val_loss_log, file_name=self.config.log_file_name, x1_label="train_loss",
                                      x2_label="val_loss",y_label='loss')
+
+            self.log_helper.save_plt(x1=train_score_log, x2=val_score_log, file_name=self.config.log_file_name,
+                                     x1_label="train_score",
+                                     x2_label="val_score", y_label='bleu_score')
             save_path = saver.save(sess, self.config.save_path)
             # save_path = saver.save(sess, 'my_net/test.ckpt')
             print("Save to path: ", save_path)
