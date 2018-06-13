@@ -13,9 +13,9 @@ import pickle
 import data_factory
 
 from helpers.log_helper import LogHelper
-from rouge_helper import ROUGEHelper
-from bleu_helper import BLEUHelper
-from batch_helper import BatchHelper
+from helpers.rouge_helper import ROUGEHelper
+from helpers.bleu_helper import BLEUHelper
+from helpers.batch_helper import BatchHelper
 
 
 class Config():
@@ -72,8 +72,8 @@ class TrainerConfig():
     # learning_rate_decay = 0.9
     learning_rate = 0.005
     # min_learning_rate = 0.0005
-    mode = 'train'
-    # mode = 'predict'
+    # mode = 'train'
+    mode = 'predict'
     # mode = 'none'
 
 
@@ -119,7 +119,7 @@ def main():
         trainer.run()
     elif trainer_config.mode == 'predict':
         predictor = Predictor(data_set=data_set, model=model, score_helper=score_helper, vocab_dict=vocab_dict,
-                              path=trainer_config.predict_model_path)
+                              path=trainer_config.predict_model_path, batch_helper = batch_helper)
 
         # data_x, data_y = data_factory.split_by_length(data_set.train_x, data_set.train_y)
 
@@ -127,8 +127,8 @@ def main():
         #     print(len(x))
         #
         # print(len(data_x[6]))
-        # predictor.get_score(input_data=data_set.train_x, target=data_set.train_y, vocab_to_int=vocab_dict.vocab_to_int,
-        #                     batch_size=trainer_config.batch_size)
+        predictor.get_score(input_data=data_set.train_x, target=data_set.train_y, vocab_to_int=vocab_dict.vocab_to_int,
+                            batch_size=trainer_config.batch_size)
         # predictor.get_score(input_data=data_x[0], target=data_y[0], vocab_to_int=vocab_dict.vocab_to_int,
         #                     batch_size=trainer_config.batch_size)
 

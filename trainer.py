@@ -2,7 +2,7 @@ import abc
 import tensorflow as tf
 import numpy as np
 from hyper_optimizer.hyper_optimizer import IHyperOptimizer
-import batch_helper
+
 
 
 class ITrainer(metaclass=abc.ABCMeta):

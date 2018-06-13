@@ -1,6 +1,5 @@
 import abc
 import tensorflow as tf
-import batch_helper
 import numpy as np
 
 class IPredictor(metaclass=abc.ABCMeta):
@@ -35,12 +34,14 @@ class IPredictor(metaclass=abc.ABCMeta):
 
 
 class Predictor(IPredictor):
-    def __init__(self, data_set, model, score_helper, vocab_dict, path):
+    def __init__(self, data_set, model, score_helper, vocab_dict, path, batch_helper):
         self.data_set = data_set
         self.model = model
         self.score_helper = score_helper
         self.vocab_dict = vocab_dict
+        self.batch_helper = batch_helper
         self.sess = self.predic_init(path)
+
 
 
     # def set_model(self, model):
@@ -89,7 +90,7 @@ class Predictor(IPredictor):
 
 
         scores = []
-        batch_iter = batch_helper.get_batches(texts=input_data, summaries=target, batch_size=batch_size, vocab_to_int=vocab_to_int)
+        batch_iter = self.batch_helper.get_batches(texts=input_data, summaries=target, batch_size=batch_size, vocab_to_int=vocab_to_int)
         for pad_summaries_batch, pad_texts_batch, pad_summaries_lengths, pad_texts_lengths in batch_iter:
             # feed = {model.input_data: pad_texts_batch,
             #         model.summary_length: pad_summaries_batch,
