@@ -35,16 +35,23 @@ class ITrainer(metaclass=abc.ABCMeta):
     def set_model(self):
         return NotImplemented
 
+    @abc.abstractmethod
+    def set_batch_helper(self):
+        return NotImplemented
+
+
+
 class TrainerDirector():
     def __init__(self, trainer):
         self.trainer = trainer
 
-    def create_trainer(self, data_set, vocab_dict, score_helper, model, log_helper):
+    def create_trainer(self, data_set, vocab_dict, score_helper, model, log_helper, batch_helper):
         self.trainer.set_data_set(data_set)
         self.trainer.set_vocab_dict(vocab_dict)
         self.trainer.set_score_helper(score_helper)
         self.trainer.set_model(model)
         self.trainer.set_log_helper(log_helper)
+        self.trainer.set_batch_helper(batch_helper)
 
 
 class Trainer(ITrainer, IHyperOptimizer):
@@ -54,6 +61,7 @@ class Trainer(ITrainer, IHyperOptimizer):
         self.vocab_dict = None
         self.score_helper = None
         self.log_helper = None
+        self.batch_helper = None
         self.model = None
 
     # @property
@@ -64,6 +72,8 @@ class Trainer(ITrainer, IHyperOptimizer):
     #     self._test = val
     def set_score_helper(self, score_helper):
         self.score_helper = score_helper
+    def set_batch_helper(self, batch_helper):
+        self.batch_helper = batch_helper
 
     def set_data_set(self, data_set):
         self.data_set = data_set
@@ -124,7 +134,7 @@ class Trainer(ITrainer, IHyperOptimizer):
 
     def get_score(self, sess, x, y):
         scores = []
-        batch_iter = batch_helper.get_batches(summaries=y, texts=x,
+        batch_iter = self.batch_helper.get_batches(summaries=y, texts=x,
                                               batch_size=self.config.batch_size,
                                               vocab_to_int=self.vocab_dict.vocab_to_int)
         for pad_summaries_batch, pad_texts_batch, pad_summaries_lengths, pad_texts_lengths in batch_iter:
@@ -143,7 +153,7 @@ class Trainer(ITrainer, IHyperOptimizer):
     def calculate_loss(self, sess, input, target):
         loss = []
         # val_state = sess.run(cell.zero_state(batch_size, tf.float32))
-        batch_iter = batch_helper.get_batches(summaries=target, texts=input,
+        batch_iter = self.batch_helper.get_batches(summaries=target, texts=input,
                                               batch_size=self.config.batch_size,
                                               vocab_to_int=self.vocab_dict.vocab_to_int)
         for pad_summaries_batch, pad_texts_batch, pad_summaries_lengths, pad_texts_lengths in batch_iter:
@@ -178,8 +188,11 @@ class Trainer(ITrainer, IHyperOptimizer):
             val_score_log = []
             for epoch in range(epochs):
                 print('epoch', epoch)
-                batch_iter = batch_helper.get_batches(summaries=self.data_set.train_y, texts=self.data_set.train_x,
-                                         batch_size=self.config.batch_size, vocab_to_int=self.vocab_dict.vocab_to_int)
+                # batch_iter = batch_helper.get_batches(summaries=self.data_set.train_y, texts=self.data_set.train_x,
+                #                          batch_size=self.config.batch_size, vocab_to_int=self.vocab_dict.vocab_to_int)
+                batch_iter = self.batch_helper.get_batches(summaries=self.data_set.train_y, texts=self.data_set.train_x,
+                                                      batch_size=self.config.batch_size,
+                                                      vocab_to_int=self.vocab_dict.vocab_to_int)
                 for pad_summaries_batch, pad_texts_batch, pad_summaries_lengths, pad_texts_lengths in batch_iter:
                     # print('pad_summaries_batch', pad_summaries_batch.shape)
                     # print('pad_texts_batch', pad_texts_batch.shape)

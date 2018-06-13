@@ -15,6 +15,7 @@ import data_factory
 from helpers.log_helper import LogHelper
 from rouge_helper import ROUGEHelper
 from bleu_helper import BLEUHelper
+from batch_helper import BatchHelper
 
 
 class Config():
@@ -80,6 +81,7 @@ class TrainerConfig():
 def main():
     cf = Config()
     log_helper = LogHelper()
+    batch_helper = BatchHelper()
     trainer_config = TrainerConfig()
     data_set = dl.load_data_set(cf)
     vocab_dict = dl.load_vocab_dict(cf)
@@ -110,7 +112,8 @@ def main():
     if trainer_config.mode == 'train':
         trainer = Trainer(trainer_config)
         trainer_director = TrainerDirector(trainer)
-        trainer_director.create_trainer(data_set=data_set, vocab_dict=vocab_dict, score_helper=score_helper, model=model, log_helper=log_helper)
+        trainer_director.create_trainer(data_set=data_set, vocab_dict=vocab_dict, score_helper=score_helper, model=model,
+                                        log_helper=log_helper, batch_helper=batch_helper)
 
         # trainer = Random_search(component=trainer, hp_generator=None)
         trainer.run()
